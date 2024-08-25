@@ -1,0 +1,8 @@
+[package]
+name = "dashing"
+version = "0.1.0"
+edition = "2021"
+authors = ["Markus Hovd <markus.hovd@farmasi.uio.no>", "Julián D. Otálvaro"]
+
+[dependencies]
+dashmap = "6.0.1"
