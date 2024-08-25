@@ -43,11 +43,17 @@ where
     }
 
     fn evict_if_needed(&self) {
-        let mut order = self.inner.order.lock().unwrap();
-        if order.len() > self.inner.capacity {
-            if let Some(oldest_key) = order.pop_front() {
-                self.inner.map.remove(&oldest_key);
+        let oldest_key = {
+            let mut order = self.inner.order.lock().unwrap();
+            if order.len() > self.inner.capacity {
+                order.pop_front()
+            } else {
+                None
             }
+        };
+
+        if let Some(key) = oldest_key {
+            self.inner.map.remove(&key);
         }
     }
 

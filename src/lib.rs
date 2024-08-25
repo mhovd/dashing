@@ -7,16 +7,25 @@ pub trait Cache<K, V>
 where
     K: Eq + Hash,
 {
+    /// Inserts a key-value pair into the cache.
     fn insert(&self, key: K, value: V);
+    /// Returns the value associated with the key.
     fn get(&self, key: &K) -> Option<V>;
+    /// Removes the value associated with the key.
     fn remove(&self, key: &K) -> Option<V>;
+    /// Removes all key-value pairs from the cache.
     fn clear(&self);
+    /// Returns the number of key-value pairs in the cache.
     fn len(&self) -> usize;
+    /// Returns `true` if the cache is empty.
     fn is_empty(&self) -> bool;
+    /// Returns the number of cache hits.
     fn hits(&self) -> usize;
+    /// Returns the number of cache misses.
     fn misses(&self) -> usize;
 }
 
+/// A struct that holds statistics about cache hits and misses.
 struct Statistics {
     hits: AtomicUsize,
     misses: AtomicUsize,
