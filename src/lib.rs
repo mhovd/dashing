@@ -23,6 +23,10 @@ where
     fn hits(&self) -> usize;
     /// Returns the number of cache misses.
     fn misses(&self) -> usize;
+    /// Write the cache to a file.
+    fn write_to_file(&self, file_name: &str);
+    /// Read the cache from a file.
+    fn read_from_file(&self, file_name: &str);
 }
 
 /// A struct that holds statistics about cache hits and misses.

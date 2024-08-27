@@ -121,6 +121,16 @@ where
     fn misses(&self) -> usize {
         self.inner.statistics.misses()
     }
+
+    fn write_to_file(&self, file_name: &str) {
+        let _ = file_name;
+        todo!()
+    }
+
+    fn read_from_file(&self, file_name: &str) {
+        let _ = file_name;
+        todo!()
+    }
 }
 
 impl<K, V> Clone for LRUCache<K, V>
