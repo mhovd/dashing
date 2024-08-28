@@ -1,4 +1,5 @@
 use crate::{Cache, Statistics};
+use anyhow::Result;
 use dashmap::DashMap;
 use serde::{Deserialize, Serialize};
 use std::hash::Hash;
@@ -82,7 +83,7 @@ where
         self.inner.statistics.misses()
     }
 
-    fn write_to_file(&self, file_name: &str) {
+    fn write_to_file(&self, file_name: &str) -> Result<()> {
         let _ = file_name;
         // Collect all entries from the dashmap
         let entries: Vec<(K, V)> = self
@@ -93,13 +94,14 @@ where
             .collect();
 
         // Use bincode to serialize the entries
-        let encoded: Vec<u8> = bincode::serialize(&entries).unwrap();
+        let encoded: Vec<u8> = bincode::serialize(&entries)?;
 
         // Write the encoded entries to a file
-        std::fs::write(file_name, encoded).unwrap();
+        std::fs::write(file_name, encoded)?;
+        Ok(())
     }
 
-    fn read_from_file(&self, file_name: &str) {
+    fn read_from_file(&self, file_name: &str) -> Result<()> {
         // Read the encoded entries from a file
         let encoded = std::fs::read(file_name).unwrap();
 
@@ -110,6 +112,7 @@ where
         for (key, value) in entries {
             self.inner.map.insert(key, value);
         }
+        Ok(())
     }
 }
 

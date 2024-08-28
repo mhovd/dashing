@@ -5,6 +5,7 @@ edition = "2021"
 authors = ["Markus Hovd <markus.hovd@farmasi.uio.no>", "Julián D. Otálvaro"]
 
 [dependencies]
+anyhow = "1.0.86"
 bincode = "1.3.3"
 csv = "1.3.0"
 dashmap = "6.0.1"
