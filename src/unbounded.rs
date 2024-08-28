@@ -2,7 +2,9 @@ use crate::{Cache, Statistics};
 use anyhow::Result;
 use dashmap::DashMap;
 use serde::{Deserialize, Serialize};
+use std::fs::File;
 use std::hash::Hash;
+use std::io::{BufWriter, Write};
 use std::sync::Arc;
 
 /// An unbounded cache that stores key-value pairs in a `DashMap`.
@@ -84,7 +86,14 @@ where
     }
 
     fn write_to_file(&self, file_name: &str) -> Result<()> {
-        let _ = file_name;
+        // Open a file in write mode
+        let file = File::create(file_name).map_err(|e| {
+            eprintln!("Failed to create file '{}': {}", file_name, e); // Add debug output
+            e
+        })?;
+
+        let mut writer = BufWriter::new(file);
+
         // Collect all entries from the dashmap
         let entries: Vec<(K, V)> = self
             .inner
@@ -94,19 +103,47 @@ where
             .collect();
 
         // Use bincode to serialize the entries
-        let encoded: Vec<u8> = bincode::serialize(&entries)?;
+        let encoded: Vec<u8> = bincode::serialize(&entries).map_err(|e| {
+            eprintln!("Serialization failed: {:?}", e); // Add debug output
+            e
+        })?;
 
-        // Write the encoded entries to a file
-        std::fs::write(file_name, encoded)?;
+        // Write the encoded entries to the buffered writer
+        writer.write_all(&encoded).map_err(|e| {
+            eprintln!("Failed to write to file '{}': {}", file_name, e); // Add debug output
+            e
+        })?;
+
+        // Ensure all data is flushed to the file
+        writer.flush().map_err(|e| {
+            eprintln!("Failed to flush file '{}': {}", file_name, e); // Add debug output
+            e
+        })?;
+
         Ok(())
     }
 
     fn read_from_file(&self, file_name: &str) -> Result<()> {
         // Read the encoded entries from a file
-        let encoded = std::fs::read(file_name).unwrap();
+        let encoded = std::fs::read(file_name).map_err(|e| {
+            eprintln!("Failed to read file '{}': {}", file_name, e); // Add debug output
+            e
+        })?;
+
+        // Check if the file was empty
+        if encoded.is_empty() {
+            eprintln!(
+                "File '{}' is empty or was not written correctly.",
+                file_name
+            );
+            return Err(anyhow::anyhow!("File is empty"));
+        }
 
         // Use bincode to deserialize the entries
-        let entries: Vec<(K, V)> = bincode::deserialize(&encoded).unwrap();
+        let entries: Vec<(K, V)> = bincode::deserialize(&encoded).map_err(|e| {
+            eprintln!("Deserialization failed: {:?}", e); // Add debug output
+            e
+        })?;
 
         // Insert the entries into the dashmap
         for (key, value) in entries {
