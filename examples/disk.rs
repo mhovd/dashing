@@ -12,12 +12,12 @@ fn main() -> Result<(), anyhow::Error> {
     cache.insert(3, "three".to_string());
 
     println!("Writing cache to file...");
-    cache.write_to_file("dashing.cache")?;
+    cache.write("dashing.cache")?;
 
     let cache2: Unbounded<K, V> = Unbounded::new();
 
     println!("Reading cache from file...");
-    cache2.read_from_file("dashing.cache")?;
+    cache2.read("dashing.cache")?;
 
     assert_eq!(cache2.get(&1), Some("one".to_string()));
     Ok(())

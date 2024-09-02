@@ -122,12 +122,12 @@ where
         self.inner.statistics.misses()
     }
 
-    fn write_to_file(&self, file_name: &str) -> Result<(), anyhow::Error> {
+    fn write(&self, file_name: &str) -> Result<(), anyhow::Error> {
         let _ = file_name;
         todo!()
     }
 
-    fn read_from_file(&self, file_name: &str) -> Result<(), anyhow::Error> {
+    fn read(&self, file_name: &str) -> Result<(), anyhow::Error> {
         let _ = file_name;
         todo!()
     }

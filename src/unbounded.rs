@@ -85,7 +85,7 @@ where
         self.inner.statistics.misses()
     }
 
-    fn write_to_file(&self, file_name: &str) -> Result<()> {
+    fn write(&self, file_name: &str) -> Result<()> {
         // Open a file in write mode
         let file = File::create(file_name).map_err(|e| {
             eprintln!("Failed to create file '{}': {}", file_name, e); // Add debug output
@@ -123,7 +123,7 @@ where
         Ok(())
     }
 
-    fn read_from_file(&self, file_name: &str) -> Result<()> {
+    fn read(&self, file_name: &str) -> Result<()> {
         // Read the encoded entries from a file
         let encoded = std::fs::read(file_name).map_err(|e| {
             eprintln!("Failed to read file '{}': {}", file_name, e); // Add debug output
