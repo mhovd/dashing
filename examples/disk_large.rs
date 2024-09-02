@@ -1,5 +1,5 @@
-use dashing::unbounded::Unbounded;
-use dashing::Cache;
+use minne::unbounded::Unbounded;
+use minne::Cache;
 
 fn main() -> Result<(), anyhow::Error> {
     type K = i32;
