@@ -27,6 +27,8 @@ where
     fn write(&self, file_name: &str) -> Result<()>;
     /// Read the cache from a file.
     fn read(&self, file_name: &str) -> Result<()>;
+    /// Clone the cache.
+    fn clone(&self) -> Self;
 }
 
 /// A struct that holds statistics about cache hits and misses.

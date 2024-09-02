@@ -131,13 +131,7 @@ where
         let _ = file_name;
         todo!()
     }
-}
 
-impl<K, V> Clone for LRUCache<K, V>
-where
-    K: Eq + Hash + Clone + Send + Sync + 'static,
-    V: Clone + Send + Sync + 'static,
-{
     fn clone(&self) -> Self {
         LRUCache {
             inner: Arc::clone(&self.inner),

@@ -151,16 +151,10 @@ where
         }
         Ok(())
     }
-}
 
-impl<K, V> Clone for Unbounded<K, V>
-where
-    K: Eq + Hash + Clone + Send + Sync + 'static + Serialize + for<'a> Deserialize<'a>,
-    V: Clone + Send + Sync + 'static + Serialize + for<'a> Deserialize<'a>,
-{
     fn clone(&self) -> Self {
         Unbounded {
-            inner: Arc::clone(&self.inner),
+            inner: self.inner.clone(),
         }
     }
 }
