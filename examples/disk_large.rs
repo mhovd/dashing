@@ -1,11 +1,10 @@
-use minne::unbounded::Unbounded;
 use minne::Cache;
 
 fn main() -> Result<(), anyhow::Error> {
     type K = i32;
     type V = Vec<i32>;
 
-    let cache: Unbounded<K, V> = Unbounded::new();
+    let cache: Cache<K, V> = Cache::new_unbounded();
 
     for i in 0..1E6 as i32 {
         // Insert random f64 values into the cache
@@ -15,7 +14,7 @@ fn main() -> Result<(), anyhow::Error> {
     println!("Writing cache to file...");
     cache.write("dashing.cache")?;
 
-    let cache2: Unbounded<K, V> = Unbounded::new();
+    let cache2: Cache<K, V> = Cache::new_unbounded();
 
     println!("Reading cache from file...");
     cache2.read("dashing.cache")?;

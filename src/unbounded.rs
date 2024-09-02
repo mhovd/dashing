@@ -1,4 +1,4 @@
-use crate::{Cache, Statistics};
+use crate::Statistics;
 use anyhow::Result;
 use dashmap::DashMap;
 use serde::{Deserialize, Serialize};
@@ -43,7 +43,7 @@ where
     V: Clone + Send + Sync + 'static + Serialize + for<'a> Deserialize<'a>,
 {
     /// Creates a new unbounded cache.
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Unbounded {
             inner: Arc::new(UnboundedInner {
                 map: DashMap::new(),
@@ -53,17 +53,17 @@ where
     }
 }
 
-impl<K, V> Cache<K, V> for Unbounded<K, V>
+impl<K, V> Unbounded<K, V>
 where
     K: Eq + Hash + Clone + Send + Sync + 'static + Serialize + for<'a> Deserialize<'a>,
     V: Clone + Send + Sync + 'static + Serialize + for<'a> Deserialize<'a>,
 {
     /// Inserts a key-value pair into the cache.
-    fn insert(&self, key: K, value: V) {
+    pub(crate) fn insert(&self, key: K, value: V) {
         self.inner.map.insert(key, value);
     }
 
-    fn get(&self, key: &K) -> Option<V> {
+    pub(crate) fn get(&self, key: &K) -> Option<V> {
         if let Some(value) = self.inner.map.get(key) {
             self.inner.statistics.add_hit();
             Some(value.clone())
@@ -73,31 +73,31 @@ where
         }
     }
 
-    fn remove(&self, key: &K) -> Option<V> {
+    pub(crate) fn remove(&self, key: &K) -> Option<V> {
         self.inner.map.remove(key).map(|(_, v)| v)
     }
 
-    fn clear(&self) {
+    pub(crate) fn clear(&self) {
         self.inner.map.clear();
     }
 
-    fn len(&self) -> usize {
+    pub(crate) fn len(&self) -> usize {
         self.inner.map.len()
     }
 
-    fn is_empty(&self) -> bool {
+    pub(crate) fn is_empty(&self) -> bool {
         self.inner.map.is_empty()
     }
 
-    fn hits(&self) -> usize {
+    pub(crate) fn hits(&self) -> usize {
         self.inner.statistics.hits()
     }
 
-    fn misses(&self) -> usize {
+    pub(crate) fn misses(&self) -> usize {
         self.inner.statistics.misses()
     }
 
-    fn write(&self, file_name: &str) -> Result<()> {
+    pub(crate) fn write(&self, file_name: &str) -> Result<()> {
         // Open a file in write mode
         let file = File::create(file_name).map_err(|e| {
             eprintln!("Failed to create file '{}': {}", file_name, e); // Add debug output
@@ -135,7 +135,7 @@ where
         Ok(())
     }
 
-    fn read(&self, file_name: &str) -> Result<()> {
+    pub(crate) fn read(&self, file_name: &str) -> Result<()> {
         // Read the encoded entries from a file
         let encoded = std::fs::read(file_name).map_err(|e| {
             eprintln!("Failed to read file '{}': {}", file_name, e); // Add debug output
@@ -178,11 +178,11 @@ where
 #[cfg(test)]
 
 mod tests {
-    use super::*;
+    use crate::Cache;
 
     #[test]
     fn test_insert_and_get() {
-        let cache = Unbounded::new();
+        let cache = Cache::new_unbounded();
         cache.insert(1, "a".to_string());
         assert_eq!(cache.get(&1), Some("a".to_string()));
         assert_eq!(cache.get(&2), None);
@@ -190,7 +190,7 @@ mod tests {
 
     #[test]
     fn test_remove() {
-        let cache = Unbounded::new();
+        let cache = Cache::new_unbounded();
         cache.insert(1, "a".to_string());
         assert_eq!(cache.remove(&1), Some("a".to_string()));
         assert_eq!(cache.remove(&1), None);
@@ -198,7 +198,7 @@ mod tests {
 
     #[test]
     fn test_hits_and_misses() {
-        let cache = Unbounded::new();
+        let cache = Cache::new_unbounded();
         cache.insert(1, "a".to_string());
 
         // Access the cache to generate hits and misses
@@ -211,7 +211,7 @@ mod tests {
 
     #[test]
     fn test_clear() {
-        let cache = Unbounded::new();
+        let cache = Cache::new_unbounded();
         cache.insert(1, "a".to_string());
         cache.clear();
         assert_eq!(cache.len(), 0);
@@ -219,7 +219,7 @@ mod tests {
 
     #[test]
     fn test_multithreaded() {
-        let cache = Unbounded::new();
+        let cache = Cache::new_unbounded();
         let mut handles = vec![];
 
         for i in 0..10 {

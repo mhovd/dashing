@@ -3,30 +3,30 @@ use std::collections::VecDeque;
 use std::hash::Hash;
 use std::sync::{Arc, Mutex};
 
-use crate::{Cache, Statistics};
+use crate::Statistics;
 
 /// An LRU cache that stores key-value pairs in a `DashMap`.
-pub struct LRUCache<K, V>
+pub struct LRU<K, V>
 where
     K: Eq + Hash + Clone + Send + Sync + 'static,
     V: Clone + Send + Sync + 'static,
 {
-    inner: Arc<LRUCacheInner<K, V>>,
+    inner: Arc<LRUInner<K, V>>,
 }
 
-impl<K, V> Clone for LRUCache<K, V>
+impl<K, V> Clone for LRU<K, V>
 where
     K: Eq + Hash + Clone + Send + Sync + 'static,
     V: Clone + Send + Sync + 'static,
 {
     fn clone(&self) -> Self {
-        LRUCache {
+        LRU {
             inner: self.inner.clone(),
         }
     }
 }
 
-struct LRUCacheInner<K, V>
+struct LRUInner<K, V>
 where
     K: Eq + Hash + Clone + Send + Sync + 'static,
     V: Clone + Send + Sync + 'static,
@@ -37,15 +37,15 @@ where
     statistics: Statistics,
 }
 
-impl<K, V> LRUCache<K, V>
+impl<K, V> LRU<K, V>
 where
     K: Eq + Hash + Clone + Send + Sync + 'static,
     V: Clone + Send + Sync + 'static,
 {
-    /// Creates a new LRUCache with the specified capacity.
-    pub fn new(capacity: usize) -> Self {
-        LRUCache {
-            inner: Arc::new(LRUCacheInner {
+    /// Creates a new LRU with the specified capacity.
+    pub(crate) fn new(capacity: usize) -> Self {
+        LRU {
+            inner: Arc::new(LRUInner {
                 map: DashMap::new(),
                 order: Mutex::new(VecDeque::new()),
                 capacity,
@@ -78,18 +78,18 @@ where
     }
 }
 
-impl<K, V> Cache<K, V> for LRUCache<K, V>
+impl<K, V> LRU<K, V>
 where
     K: Eq + Hash + Clone + Send + Sync + 'static,
     V: Clone + Send + Sync + 'static,
 {
-    fn insert(&self, key: K, value: V) {
+    pub(crate) fn insert(&self, key: K, value: V) {
         self.inner.map.insert(key.clone(), value);
         self.update_order(key);
         self.evict_if_needed();
     }
 
-    fn get(&self, key: &K) -> Option<V> {
+    pub(crate) fn get(&self, key: &K) -> Option<V> {
         if let Some(value) = self.inner.map.get(key) {
             self.update_order(key.clone());
             self.inner.statistics.add_hit();
@@ -100,7 +100,7 @@ where
         }
     }
 
-    fn remove(&self, key: &K) -> Option<V> {
+    pub(crate) fn remove(&self, key: &K) -> Option<V> {
         if let Some(value) = self.inner.map.remove(key) {
             let mut order = self.inner.order.lock().unwrap();
             if let Some(pos) = order.iter().position(|k| k == key) {
@@ -112,34 +112,34 @@ where
         }
     }
 
-    fn clear(&self) {
+    pub(crate) fn clear(&self) {
         self.inner.map.clear();
         let mut order = self.inner.order.lock().unwrap();
         order.clear();
     }
 
-    fn len(&self) -> usize {
+    pub(crate) fn len(&self) -> usize {
         self.inner.map.len()
     }
 
-    fn is_empty(&self) -> bool {
+    pub(crate) fn is_empty(&self) -> bool {
         self.inner.map.is_empty()
     }
 
-    fn hits(&self) -> usize {
+    pub(crate) fn hits(&self) -> usize {
         self.inner.statistics.hits()
     }
 
-    fn misses(&self) -> usize {
+    pub(crate) fn misses(&self) -> usize {
         self.inner.statistics.misses()
     }
 
-    fn write(&self, file_name: &str) -> Result<(), anyhow::Error> {
+    pub(crate) fn write(&self, file_name: &str) -> Result<(), anyhow::Error> {
         let _ = file_name;
         todo!()
     }
 
-    fn read(&self, file_name: &str) -> Result<(), anyhow::Error> {
+    pub(crate) fn read(&self, file_name: &str) -> Result<(), anyhow::Error> {
         let _ = file_name;
         todo!()
     }
@@ -147,51 +147,51 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use crate::Cache;
 
     #[test]
     fn test_insert_and_get() {
-        let cache = LRUCache::new(3);
-        cache.insert(1, "one");
-        cache.insert(2, "two");
-        cache.insert(3, "three");
+        let cache = Cache::new_lru(10);
+        cache.insert(1, "one".to_string());
+        cache.insert(2, "two".to_string());
+        cache.insert(3, "three".to_string());
 
-        assert_eq!(cache.get(&1), Some("one"));
-        assert_eq!(cache.get(&2), Some("two"));
-        assert_eq!(cache.get(&3), Some("three"));
+        assert_eq!(cache.get(&1), Some("one".to_string()));
+        assert_eq!(cache.get(&2), Some("two".to_string()));
+        assert_eq!(cache.get(&3), Some("three".to_string()));
     }
 
     #[test]
     fn test_insert_evict_and_get() {
-        let cache = LRUCache::new(3);
-        cache.insert(1, "one");
-        cache.insert(2, "two");
-        cache.insert(3, "three");
-        cache.insert(4, "four");
+        let cache = Cache::new_lru(3);
+        cache.insert(1, "one".to_string());
+        cache.insert(2, "two".to_string());
+        cache.insert(3, "three".to_string());
+        cache.insert(4, "four".to_string());
 
         assert_eq!(cache.get(&1), None);
-        assert_eq!(cache.get(&2), Some("two"));
-        assert_eq!(cache.get(&3), Some("three"));
-        assert_eq!(cache.get(&4), Some("four"));
+        assert_eq!(cache.get(&2), Some("two".to_string()));
+        assert_eq!(cache.get(&3), Some("three".to_string()));
+        assert_eq!(cache.get(&4), Some("four".to_string()));
     }
 
     #[test]
     fn test_remove() {
-        let cache = LRUCache::new(3);
-        cache.insert(1, "one");
-        cache.insert(2, "two");
-        cache.insert(3, "three");
+        let cache = Cache::new_lru(3);
+        cache.insert(1, "one".to_string());
+        cache.insert(2, "two".to_string());
+        cache.insert(3, "three".to_string());
 
-        assert_eq!(cache.remove(&2), Some("two"));
+        assert_eq!(cache.remove(&2), Some("two".to_string()));
         assert_eq!(cache.get(&2), None);
     }
 
     #[test]
     fn test_clear() {
-        let cache = LRUCache::new(3);
-        cache.insert(1, "one");
-        cache.insert(2, "two");
-        cache.insert(3, "three");
+        let cache = Cache::new_lru(3);
+        cache.insert(1, "one".to_string());
+        cache.insert(2, "two".to_string());
+        cache.insert(3, "three".to_string());
 
         cache.clear();
 
@@ -201,10 +201,10 @@ mod tests {
 
     #[test]
     fn test_hits_and_misses() {
-        let cache = LRUCache::new(3);
-        cache.insert(1, "one");
-        cache.insert(2, "two");
-        cache.insert(3, "three");
+        let cache = Cache::new_lru(3);
+        cache.insert(1, "one".to_string());
+        cache.insert(2, "two".to_string());
+        cache.insert(3, "three".to_string());
 
         assert_eq!(cache.hits(), 0);
         assert_eq!(cache.misses(), 0);
@@ -219,7 +219,7 @@ mod tests {
 
     #[test]
     fn test_multithreaded() {
-        let cache = LRUCache::new(5);
+        let cache = Cache::new_lru(5);
         let mut handles = vec![];
 
         for i in 0..10 {
