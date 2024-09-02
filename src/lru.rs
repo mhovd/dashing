@@ -14,6 +14,18 @@ where
     inner: Arc<LRUCacheInner<K, V>>,
 }
 
+impl<K, V> Clone for LRUCache<K, V>
+where
+    K: Eq + Hash + Clone + Send + Sync + 'static,
+    V: Clone + Send + Sync + 'static,
+{
+    fn clone(&self) -> Self {
+        LRUCache {
+            inner: self.inner.clone(),
+        }
+    }
+}
+
 struct LRUCacheInner<K, V>
 where
     K: Eq + Hash + Clone + Send + Sync + 'static,
@@ -130,12 +142,6 @@ where
     fn read(&self, file_name: &str) -> Result<(), anyhow::Error> {
         let _ = file_name;
         todo!()
-    }
-
-    fn clone(&self) -> Self {
-        LRUCache {
-            inner: Arc::clone(&self.inner),
-        }
     }
 }
 

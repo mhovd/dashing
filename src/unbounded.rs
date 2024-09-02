@@ -16,6 +16,18 @@ where
     inner: Arc<UnboundedInner<K, V>>,
 }
 
+impl<K, V> Clone for Unbounded<K, V>
+where
+    K: Eq + Hash + Clone + Send + Sync + 'static + Serialize + for<'a> Deserialize<'a>,
+    V: Clone + Send + Sync + 'static + Serialize + for<'a> Deserialize<'a>,
+{
+    fn clone(&self) -> Self {
+        Unbounded {
+            inner: self.inner.clone(),
+        }
+    }
+}
+
 struct UnboundedInner<K, V>
 where
     K: Eq + Hash + Clone + Send + Sync + 'static + Serialize,
@@ -150,12 +162,6 @@ where
             self.inner.map.insert(key, value);
         }
         Ok(())
-    }
-
-    fn clone(&self) -> Self {
-        Unbounded {
-            inner: self.inner.clone(),
-        }
     }
 }
 

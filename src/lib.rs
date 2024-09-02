@@ -3,7 +3,7 @@ use std::{hash::Hash, sync::atomic::AtomicUsize};
 pub mod lru;
 pub mod unbounded;
 
-pub trait Cache<K, V>
+pub trait Cache<K, V>: Clone + Send + Sync
 where
     K: Eq + Hash,
 {
@@ -27,8 +27,6 @@ where
     fn write(&self, file_name: &str) -> Result<()>;
     /// Read the cache from a file.
     fn read(&self, file_name: &str) -> Result<()>;
-    /// Clone the cache.
-    fn clone(&self) -> Self;
 }
 
 /// A struct that holds statistics about cache hits and misses.
