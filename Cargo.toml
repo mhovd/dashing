@@ -3,6 +3,8 @@ name = "dashing"
 version = "0.2.0"
 edition = "2021"
 authors = ["Markus Hovd <markus.hovd@farmasi.uio.no>", "Julián D. Otálvaro"]
+description = "Fast and thread-safe cache for Rust"
+license = "GPL-3.0"
 
 [dependencies]
 anyhow = "1.0.86"
