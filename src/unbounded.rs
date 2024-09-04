@@ -46,7 +46,7 @@ where
     pub(crate) fn new() -> Self {
         Unbounded {
             inner: Arc::new(UnboundedInner {
-                map: DashMap::new(),
+                map: DashMap::with_capacity(10_000),
                 statistics: Statistics::new(),
             }),
         }
